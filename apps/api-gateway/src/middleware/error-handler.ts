@@ -1,40 +1,56 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createLogger } from '@devlock/logger';
+import { BaseError } from '../core/errors/index.js';
 
 const logger = createLogger({ service: 'api-gateway' });
 
-export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    message: string,
-    public code: string = 'ERROR',
-    public details?: unknown,
-  ) {
-    super(message);
-    this.name = 'AppError';
-  }
-}
+/**
+ * Global error handler — must be registered last.
+ * Catches all errors thrown in route handlers and middleware.
+ */
+export function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+): void {
+  const requestId = req.headers['x-request-id'] as string | undefined;
 
-export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({
-      success: false,
-      error: { code: err.code, message: err.message },
-    });
+  if (err instanceof BaseError) {
+    // Operational errors — expected, safe to expose
+    if (!err.isOperational) {
+      logger.fatal({ err, requestId, path: req.path }, 'Non-operational error');
+    } else {
+      logger.warn({ err: { code: err.code, message: err.message }, requestId, path: req.path }, err.message);
+    }
+
+    res.status(err.statusCode).json(err.toJSON());
     return;
   }
 
-  if (err.name === 'ZodError') {
+  // Mongoose validation errors
+  if (err.name === 'ValidationError') {
     res.status(400).json({
       success: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Validation failed', details: (err as any).errors },
+      error: { code: 'VALIDATION_ERROR', message: err.message },
     });
     return;
   }
 
-  logger.error({ err }, 'Unhandled error');
+  // Mongoose duplicate key
+  if (err.name === 'MongoServerError' && (err as any).code === 11000) {
+    res.status(409).json({
+      success: false,
+      error: { code: 'CONFLICT', message: 'Resource already exists' },
+    });
+    return;
+  }
+
+  // Unexpected errors — log full stack, return generic message
+  logger.fatal({ err, requestId, path: req.path, method: req.method }, 'Unhandled error');
+
   res.status(500).json({
     success: false,
-    error: { code: 'INTERNAL_ERROR', message: 'Internal server error' },
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
   });
 }

@@ -1,15 +1,71 @@
 import { Router } from 'express';
+import { authRoutes } from '../modules/auth/auth.routes.js';
+import { licenseRoutes } from '../modules/licenses/license.routes.js';
+import { sdkRoutes } from '../modules/sdk/sdk.routes.js';
+import { authenticate } from '../middleware/authenticate.js';
+import { authorize } from '../middleware/authorize.js';
 
-export const routes = Router();
+export function createRoutes(): Router {
+  const router = Router();
 
-// Each route module will be implemented in its respective service
-// The gateway proxies or directly handles based on architecture choice
+  // ── Public routes ──────────────────────────────────────────────────
+  router.use('/auth', authRoutes);
 
-routes.use('/auth', (_req, res) => res.json({ service: 'auth-service' }));
-routes.use('/sdk', (_req, res) => res.json({ service: 'sdk-endpoints' }));
-routes.use('/projects', (_req, res) => res.json({ service: 'license-service' }));
-routes.use('/licenses', (_req, res) => res.json({ service: 'license-service' }));
-routes.use('/config', (_req, res) => res.json({ service: 'config-service' }));
-routes.use('/analytics', (_req, res) => res.json({ service: 'telemetry-service' }));
-routes.use('/billing', (_req, res) => res.json({ service: 'billing-service' }));
-routes.use('/notifications', (_req, res) => res.json({ service: 'notification-service' }));
+  // ── SDK routes (API key auth, not JWT) ─────────────────────────────
+  router.use('/sdk', sdkRoutes);
+
+  // ── Protected routes (JWT auth) ────────────────────────────────────
+
+  // Projects
+  router.use('/projects/:projectId/licenses', authenticate, licenseRoutes);
+
+  // Placeholder routes for other modules
+  router.get('/projects', authenticate, authorize('project:read'), (_req, res) => {
+    res.json({ success: true, data: [], meta: { total: 0 } });
+  });
+
+  router.get('/organizations', authenticate, authorize('org:read'), (req, res) => {
+    res.json({ success: true, data: { orgId: req.auth!.orgId } });
+  });
+
+  // Config & Commands
+  router.get('/projects/:projectId/config', authenticate, authorize('config:read'), (_req, res) => {
+    res.json({ success: true, data: {} });
+  });
+
+  router.put('/projects/:projectId/config', authenticate, authorize('config:update'), (_req, res) => {
+    res.json({ success: true, data: { updated: true } });
+  });
+
+  // Feature Flags
+  router.get('/projects/:projectId/flags', authenticate, authorize('config:read'), (_req, res) => {
+    res.json({ success: true, data: [] });
+  });
+
+  // Analytics
+  router.get('/projects/:projectId/analytics/overview', authenticate, authorize('analytics:read'), (_req, res) => {
+    res.json({ success: true, data: {} });
+  });
+
+  // Audit Logs
+  router.get('/organizations/:orgId/audit-logs', authenticate, authorize('audit:read'), (_req, res) => {
+    res.json({ success: true, data: [], meta: { total: 0 } });
+  });
+
+  // Billing
+  router.get('/billing/subscription', authenticate, authorize('org:manage_billing'), (_req, res) => {
+    res.json({ success: true, data: { plan: 'free' } });
+  });
+
+  // Notifications
+  router.get('/notifications', authenticate, (_req, res) => {
+    res.json({ success: true, data: [] });
+  });
+
+  // Webhooks
+  router.get('/projects/:projectId/webhooks', authenticate, authorize('webhook:manage'), (_req, res) => {
+    res.json({ success: true, data: [] });
+  });
+
+  return router;
+}
