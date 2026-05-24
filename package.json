@@ -1,0 +1,33 @@
+{
+  "name": "devlock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Software licensing, remote management, and developer protection platform",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "setup": "bash scripts/setup.sh",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "generate:keys": "tsx scripts/generate-keys.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0",
+    "tsx": "^4.15.0",
+    "prettier": "^3.3.0",
+    "eslint": "^9.5.0"
+  },
+  "packageManager": "pnpm@9.4.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
