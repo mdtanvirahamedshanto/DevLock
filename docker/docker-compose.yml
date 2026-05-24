@@ -1,0 +1,99 @@
+version: "3.9"
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: devlock-mongo
+    ports: ["27017:27017"]
+    volumes: ["./volumes/mongo:/data/db"]
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "rs.status().ok || rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: devlock-redis
+    ports: ["6379:6379"]
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes: ["./volumes/redis:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Application Services ────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: devlock-api
+    ports: ["3000:3000"]
+    env_file: ../.env
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/devlock?replicaSet=rs0
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongodb: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: apps/auth-service/Dockerfile
+    container_name: devlock-auth
+    ports: ["3001:3001"]
+    env_file: ../.env
+    environment:
+      - PORT=3001
+      - MONGODB_URI=mongodb://mongodb:27017/devlock?replicaSet=rs0
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongodb: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  license-service:
+    build:
+      context: ..
+      dockerfile: apps/license-service/Dockerfile
+    container_name: devlock-license
+    ports: ["3002:3002"]
+    env_file: ../.env
+    environment:
+      - PORT=3002
+      - MONGODB_URI=mongodb://mongodb:27017/devlock?replicaSet=rs0
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongodb: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  websocket-service:
+    build:
+      context: ..
+      dockerfile: apps/websocket-service/Dockerfile
+    container_name: devlock-ws
+    ports: ["3010:3010"]
+    env_file: ../.env
+    environment:
+      - PORT=3010
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis: { condition: service_healthy }
+
+  web-dashboard:
+    build:
+      context: ..
+      dockerfile: apps/web-dashboard/Dockerfile
+    container_name: devlock-dashboard
+    ports: ["4000:3000"]
+    env_file: ../.env
+    depends_on: [api-gateway]
+
+volumes:
+  mongo_data:
+  redis_data:
