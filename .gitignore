@@ -7,17 +7,23 @@ dist/
 .next/
 out/
 build/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
 
 # Environment
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # IDE
-.vscode/
+.vscode/settings.json
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
@@ -27,17 +33,13 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Docker
-docker/mongo/data/
-docker/redis/data/
+# Docker volumes
+docker/volumes/
 
 # Logs
 logs/
 *.log
 npm-debug.log*
-
-# Turbo
-.turbo/
 
 # Keys (never commit)
 *.pem

@@ -1,0 +1,31 @@
+{
+  "name": "@devlock/logger",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "clean": "rm -rf dist .turbo",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ --ext .ts",
+    "lint:fix": "eslint src/ --ext .ts --fix"
+  },
+  "dependencies": {
+    "pino": "^9.2.0",
+    "pino-pretty": "^11.2.0"
+  },
+  "devDependencies": {
+    "@devlock/eslint-config": "workspace:*",
+    "@devlock/tsconfig": "workspace:*",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0"
+  }
+}
