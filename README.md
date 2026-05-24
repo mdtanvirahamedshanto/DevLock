@@ -1,35 +1,25 @@
 # DevLock
 
-**Production-Grade Turborepo Monorepo — Software Licensing & Remote Management Platform**
+> Software Licensing, Remote Management & Developer Protection Platform
 
-## Architecture Overview
+DevLock enables developers to protect, license, and remotely manage their distributed applications. Install lightweight SDKs into client projects, then control everything from a central dashboard — suspend licenses, enable maintenance mode, push notifications, toggle features, enforce domain locking, and activate kill-switches in real time.
 
-```
-devlock/
-├── apps/                          # Deployable applications
-│   ├── web-dashboard/             # Next.js admin dashboard
-│   ├── api-gateway/               # Express.js API gateway
-│   ├── auth-service/              # Authentication & identity
-│   ├── license-service/           # License CRUD & validation
-│   ├── telemetry-service/         # Analytics & audit logging
-│   ├── websocket-service/         # Real-time Socket.IO gateway
-│   ├── notification-service/      # Email, webhooks, push
-│   └── billing-service/           # Stripe subscription management
-├── packages/                      # Shared internal packages
-│   ├── frontend-sdk/              # Browser SDK (@devlock/frontend-sdk)
-│   ├── backend-sdk/               # Node.js SDK (@devlock/backend-sdk)
-│   ├── shared-types/              # TypeScript types & Zod validators
-│   ├── ui/                        # React component library
-│   ├── database/                  # Mongoose models & connections
-│   ├── logger/                    # Structured logging (pino)
-│   ├── config/                    # Environment config with validation
-│   ├── encryption/                # Crypto utilities (AES, Ed25519, HMAC)
-│   ├── eslint-config/             # Shared ESLint configurations
-│   └── tsconfig/                  # Shared TypeScript configurations
-├── docker/                        # Docker Compose & infrastructure
-├── scripts/                       # Utility scripts
-└── .github/workflows/             # CI/CD pipelines
-```
+---
+
+## What DevLock Does
+
+- **License Management** — Create, validate, suspend, revoke licenses with cryptographic verification
+- **Remote Kill-Switch** — Instantly disable deployed applications
+- **Maintenance Mode** — Show maintenance messages without redeploying
+- **Domain Locking** — Prevent unauthorized redistribution by locking to specific domains
+- **Feature Flags** — Toggle features in real-time across all deployments
+- **Payment Warnings** — Display payment-related notices to end-users
+- **In-App Notifications** — Push messages to deployed applications instantly
+- **Tamper Detection** — Detect and respond to SDK manipulation attempts
+- **Offline Support** — Cryptographically signed offline license tokens
+- **Multi-Tenant SaaS** — Full tenant isolation with shared infrastructure
+
+---
 
 ## Tech Stack
 
@@ -40,155 +30,336 @@ devlock/
 | Frontend | Next.js 14, React 18, Tailwind CSS |
 | Backend | Express.js, Node.js 20 |
 | Database | MongoDB 7 (Mongoose) |
-| Cache | Redis 7 (ioredis) |
+| Cache/Pub-Sub | Redis 7 (ioredis) |
 | Real-time | Socket.IO 4 |
 | Queue | BullMQ |
-| Containerization | Docker, Docker Compose |
+| Containers | Docker, Docker Compose |
 | CI/CD | GitHub Actions |
-| Linting | ESLint, Prettier |
-| Git Hooks | Husky, lint-staged, Commitlint |
+| Code Quality | ESLint, Prettier, Husky, Commitlint |
 
-## Quick Start
+---
+
+## Project Structure
+
+```
+devlock/
+├── apps/
+│   ├── web-dashboard/          → Next.js admin dashboard (port 4000)
+│   ├── api-gateway/            → Express API gateway (port 3000)
+│   ├── auth-service/           → Authentication & identity (port 3001)
+│   ├── license-service/        → License CRUD & validation (port 3002)
+│   ├── telemetry-service/      → Analytics & audit logging (port 3003)
+│   ├── notification-service/   → Email, webhooks, push (port 3004)
+│   ├── billing-service/        → Stripe subscriptions (port 3005)
+│   └── websocket-service/      → Real-time Socket.IO gateway (port 3010)
+│
+├── packages/
+│   ├── shared-types/           → TypeScript types, enums, Zod validators
+│   ├── database/               → Mongoose models & Redis/Mongo connections
+│   ├── logger/                 → Structured logging (pino)
+│   ├── config/                 → Env config with Zod validation
+│   ├── encryption/             → AES-256, Ed25519, HMAC, password hashing
+│   ├── ui/                     → React component library (Tailwind + CVA)
+│   ├── frontend-sdk/           → Browser SDK for client apps
+│   ├── backend-sdk/            → Node.js SDK with Express middleware
+│   ├── eslint-config/          → Shared ESLint configs
+│   └── tsconfig/               → Shared TypeScript configs
+│
+├── docker/
+│   └── docker-compose.yml      → MongoDB + Redis + all services
+│
+├── scripts/
+│   └── generate-keys.ts        → Crypto key generation utility
+│
+├── .github/workflows/ci.yml    → Full CI pipeline
+├── turbo.json                  → Turborepo pipeline config
+├── pnpm-workspace.yaml         → Workspace definition
+├── commitlint.config.ts        → Commit message rules
+└── .husky/                     → Git hooks (pre-commit, commit-msg)
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+- Docker & Docker Compose
+
+### Setup
 
 ```bash
-# Prerequisites: Node.js 20+, pnpm 9+, Docker
+# Clone the repository
+git clone https://github.com/mdtanvirahamedshanto/DevLock.git
+cd DevLock
 
-# 1. Install dependencies
+# Install all dependencies
 pnpm install
 
-# 2. Copy environment config
+# Copy environment template
 cp .env.example .env
 
-# 3. Generate cryptographic keys
+# Generate cryptographic keys (Ed25519, AES-256, JWT secret)
 pnpm generate:keys
-# Copy output into .env
+# → Copy the output values into your .env file
 
-# 4. Start infrastructure
+# Start infrastructure (MongoDB + Redis)
 pnpm docker:up
 
-# 5. Start all services in dev mode
+# Start all services in development mode
 pnpm dev
-
-# Or start specific services:
-pnpm dev:web    # Dashboard only
-pnpm dev:api    # API + dependencies
 ```
 
-## Naming Conventions
+### Access Points
 
-| Item | Convention | Example |
-|------|-----------|---------|
-| Package names | `@devlock/<name>` | `@devlock/shared-types` |
-| App names | `@devlock/<name>` | `@devlock/api-gateway` |
-| Files | `kebab-case` | `rate-limiter.ts` |
-| Directories | `kebab-case` | `shared-types/` |
-| Types/Interfaces | `PascalCase` | `TenantContext` |
-| Functions | `camelCase` | `createLogger()` |
-| Constants | `UPPER_SNAKE_CASE` | `MAX_POOL_SIZE` |
-| Env variables | `UPPER_SNAKE_CASE` | `MONGODB_URI` |
-| DB collections | `snake_case` (plural) | `audit_logs` |
-| API routes | `kebab-case` | `/v1/feature-flags` |
-| Commit scopes | `kebab-case` | `feat(license-service):` |
+| Service | URL |
+|---------|-----|
+| Dashboard | http://localhost:4000 |
+| API Gateway | http://localhost:3000 |
+| WebSocket | ws://localhost:3010 |
+| MongoDB | mongodb://localhost:27017 |
+| Redis | redis://localhost:6379 |
 
-## Dependency Architecture
+---
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        APPS (Deployable)                          │
-├─────────────────────────────────────────────────────────────────┤
-│  web-dashboard ──► ui, shared-types                              │
-│  api-gateway ────► database, logger, config, encryption,         │
-│                    shared-types                                   │
-│  auth-service ───► database, logger, config, encryption,         │
-│                    shared-types                                   │
-│  license-service ► database, logger, config, encryption,         │
-│                    shared-types                                   │
-│  (all services follow same pattern)                              │
-├─────────────────────────────────────────────────────────────────┤
-│                      PACKAGES (Shared)                            │
-├─────────────────────────────────────────────────────────────────┤
-│  frontend-sdk ───► shared-types                                  │
-│  backend-sdk ────► shared-types                                  │
-│  database ───────► shared-types, logger                          │
-│  ui ─────────────► (standalone, React peer dep)                  │
-│  logger ─────────► (standalone)                                  │
-│  config ─────────► (standalone)                                  │
-│  encryption ─────► (standalone)                                  │
-│  shared-types ───► (standalone, foundation layer)                │
-│  eslint-config ──► (standalone, dev tooling)                     │
-│  tsconfig ───────► (standalone, dev tooling)                     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Internal Package Imports
-
-All internal packages use `workspace:*` protocol:
-
-```json
-{
-  "dependencies": {
-    "@devlock/shared-types": "workspace:*",
-    "@devlock/logger": "workspace:*",
-    "@devlock/database": "workspace:*"
-  }
-}
-```
-
-Import in code:
-```typescript
-import { LicenseStatus, type License } from '@devlock/shared-types';
-import { createLogger } from '@devlock/logger';
-import { LicenseModel, connectMongo } from '@devlock/database';
-import { encrypt, generateLicenseKey } from '@devlock/encryption';
-```
-
-## Environment Strategy
-
-| File | Purpose | Committed |
-|------|---------|-----------|
-| `.env.example` | Template with all variables | ✅ Yes |
-| `.env` | Local development defaults | ❌ No |
-| `.env.local` | Personal overrides | ❌ No |
-| `.env.test` | Test environment | ✅ Yes |
-| Docker env | Per-service in compose | ❌ No |
-| CI env | GitHub Actions secrets | N/A |
-
-Config is validated at startup via Zod schemas in `@devlock/config`.
-
-## Scripts
+## Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start all services in dev mode |
+| `pnpm dev` | Start all services in watch mode |
+| `pnpm dev:web` | Start dashboard + dependencies only |
+| `pnpm dev:api` | Start API gateway + dependencies only |
 | `pnpm build` | Build all packages and apps |
-| `pnpm lint` | Lint all packages |
+| `pnpm lint` | Lint entire codebase |
+| `pnpm lint:fix` | Auto-fix lint issues |
+| `pnpm format` | Format with Prettier |
+| `pnpm format:check` | Check formatting |
 | `pnpm typecheck` | Type-check all packages |
 | `pnpm test` | Run all tests |
-| `pnpm format` | Format all files with Prettier |
+| `pnpm test:ci` | Run tests with coverage |
 | `pnpm clean` | Remove all build artifacts |
-| `pnpm docker:up` | Start MongoDB + Redis |
-| `pnpm docker:down` | Stop infrastructure |
-| `pnpm generate:keys` | Generate crypto keys |
+| `pnpm docker:up` | Start MongoDB + Redis containers |
+| `pnpm docker:down` | Stop containers |
+| `pnpm docker:build` | Build all Docker images |
+| `pnpm generate:keys` | Generate crypto keys for .env |
+
+---
+
+## SDK Usage
+
+### Frontend SDK (Browser)
+
+```bash
+npm install @devlock/frontend-sdk
+```
+
+```typescript
+import { DevLockClient } from '@devlock/frontend-sdk';
+
+const devlock = new DevLockClient({
+  projectKey: 'pk_live_xxxxx',
+  licenseKey: 'DLCK-XXXX-XXXX-XXXX-XXXX',
+  callbacks: {
+    onSuspended: (reason) => showBlockedUI(reason),
+    onMaintenance: (message) => showMaintenancePage(message),
+    onKillSwitch: (reason) => disableApp(reason),
+    onNotification: (notif) => showToast(notif.message),
+    onFeatureToggle: (flag, enabled) => updateUI(flag, enabled),
+  },
+});
+
+await devlock.init();
+
+// Check feature flags
+if (devlock.isFeatureEnabled('premium-charts')) {
+  renderPremiumCharts();
+}
+```
+
+### Backend SDK (Node.js / Express)
+
+```bash
+npm install @devlock/backend-sdk
+```
+
+```typescript
+import { createExpressMiddleware } from '@devlock/backend-sdk/express';
+
+// Protect all routes with license validation
+app.use(createExpressMiddleware({
+  secretKey: process.env.DEVLOCK_SECRET_KEY,
+  projectId: process.env.DEVLOCK_PROJECT_ID,
+  excludePaths: ['/health', '/public'],
+  onKillSwitch: (reason) => {
+    console.error('Kill switch activated:', reason);
+  },
+}));
+
+// Access license info in route handlers
+app.get('/api/data', (req, res) => {
+  const { license, isFeatureEnabled } = req.devlock;
+
+  if (isFeatureEnabled('advanced-export')) {
+    // serve premium feature
+  }
+
+  res.json({ features: license.features });
+});
+```
+
+---
+
+## Architecture
+
+### How It Works
+
+```
+┌─────────────────────┐         ┌──────────────────────┐
+│  Client Application │         │  DevLock Dashboard   │
+│  (SDK Integrated)   │         │  (Admin Panel)       │
+└──────────┬──────────┘         └──────────┬───────────┘
+           │                               │
+           │  WebSocket + REST             │  REST API
+           ▼                               ▼
+┌──────────────────────────────────────────────────────┐
+│                   API Gateway                         │
+│         (Rate Limiting, Auth, Routing)                │
+└──────────────────────────┬───────────────────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   License    │  │    Auth      │  │   Config     │
+│   Service    │  │   Service    │  │   Service    │
+└──────┬───────┘  └──────────────┘  └──────┬───────┘
+       │                                    │
+       ▼                                    ▼
+┌──────────────────────────────────────────────────────┐
+│              WebSocket Service                         │
+│    (Real-time push to all connected SDKs)            │
+└──────────────────────────────────────────────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   MongoDB    │  │    Redis     │  │   BullMQ     │
+│  (Primary)   │  │ (Cache/PubSub)│  │  (Queues)    │
+└──────────────┘  └──────────────┘  └──────────────┘
+```
+
+### Admin Actions → SDK Response (< 100ms)
+
+1. Admin clicks "Suspend License" in dashboard
+2. API Gateway → License Service updates MongoDB
+3. License Service publishes event to Redis
+4. WebSocket Service receives event, broadcasts to SDK connections
+5. SDK receives `license:suspended` event, triggers callback
+6. Client app shows blocked UI immediately
+
+---
+
+## Internal Package Dependencies
+
+```
+shared-types          ← Foundation (no deps)
+  ↑
+  ├── database        ← Models + connections (depends on: shared-types, logger)
+  ├── frontend-sdk    ← Browser SDK (depends on: shared-types)
+  ├── backend-sdk     ← Node SDK (depends on: shared-types)
+  ├── config          ← Env validation (standalone)
+  ├── logger          ← Structured logging (standalone)
+  ├── encryption      ← Crypto utilities (standalone)
+  └── ui              ← React components (standalone)
+
+All apps depend on: shared-types, logger, config, database, encryption
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB connection string |
+| `REDIS_URL` | Redis connection string |
+| `JWT_SECRET` | Secret for JWT signing (min 32 chars) |
+| `ENCRYPTION_KEY` | AES-256 key (64 hex chars) |
+| `LICENSE_PRIVATE_KEY` | Ed25519 private key for license signing |
+| `LICENSE_PUBLIC_KEY` | Ed25519 public key (embedded in SDKs) |
+| `STRIPE_SECRET_KEY` | Stripe API key for billing |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification |
+
+Run `pnpm generate:keys` to auto-generate crypto values.
+
+---
 
 ## Commit Convention
 
-Uses [Conventional Commits](https://www.conventionalcommits.org/) enforced by Commitlint:
+Enforced by Commitlint + Husky:
 
 ```
 <type>(<scope>): <subject>
 
+# Examples:
 feat(license-service): add offline token generation
-fix(frontend-sdk): handle WebSocket reconnection
-docs(root): update architecture diagram
+fix(frontend-sdk): handle WebSocket reconnection edge case
+docs(root): update getting started guide
+refactor(database): extract connection pooling logic
+test(encryption): add HMAC verification tests
 ```
 
-## Docker Strategy
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
-- **Development**: `docker-compose.yml` runs only infrastructure (MongoDB, Redis)
-- **Production**: Each app has its own multi-stage Dockerfile
-- **Images**: Distroless Node.js Alpine, non-root user, health checks
-- **Build**: Multi-stage with dependency caching for fast rebuilds
+**Scopes:** `web-dashboard`, `api-gateway`, `license-service`, `auth-service`, `telemetry-service`, `websocket-service`, `notification-service`, `billing-service`, `frontend-sdk`, `backend-sdk`, `shared-types`, `ui`, `eslint-config`, `tsconfig`, `logger`, `encryption`, `database`, `config`, `docker`, `ci`, `root`
+
+---
+
+## Docker
+
+### Development (infrastructure only)
+
+```bash
+pnpm docker:up    # Starts MongoDB + Redis
+pnpm docker:down  # Stops containers
+```
+
+### Production (all services)
+
+```bash
+docker compose -f docker/docker-compose.yml build
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Each service has a multi-stage Dockerfile:
+- Alpine-based Node.js 20
+- Non-root user (`devlock:1001`)
+- Health checks built in
+- Minimal final image (no dev dependencies)
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Make changes following the commit convention
+4. Run checks: `pnpm lint && pnpm typecheck && pnpm test`
+5. Push and open a Pull Request
+
+---
 
 ## License
 
 MIT
+
+---
+
+## Open Source
+
+This is an open-source project. Contributions, issues, and feature requests are welcome.
+
+If you find DevLock useful, consider giving it a ⭐ on GitHub.
