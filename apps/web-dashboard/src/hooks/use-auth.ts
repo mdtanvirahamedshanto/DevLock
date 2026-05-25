@@ -15,7 +15,6 @@ export function useAuth() {
       const response = await authService.login(data);
       setAuth(response.accessToken, response.user);
       router.push('/dashboard');
-      return response;
     },
     [setAuth, router]
   );
@@ -25,7 +24,6 @@ export function useAuth() {
       const response = await authService.register(data);
       setAuth(response.accessToken, response.user);
       router.push('/dashboard');
-      return response;
     },
     [setAuth, router]
   );

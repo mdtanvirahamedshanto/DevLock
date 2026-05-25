@@ -74,14 +74,17 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        message: 'An unexpected error occurred',
-        code: 'UNKNOWN_ERROR',
+      const body = await response.json().catch(() => ({
+        error: { message: 'An unexpected error occurred', code: 'UNKNOWN_ERROR' },
       }));
+      // Backend returns { success: false, error: { code, message, details } }
+      const errorData = body.error || body;
+      const message = errorData.message || 'Request failed';
+      const details = errorData.details;
       throw new ApiError(
         response.status,
-        error.message || 'Request failed',
-        error.code
+        details ? `${message}: ${Array.isArray(details) ? details.map((d: any) => d.message).join(', ') : JSON.stringify(details)}` : message,
+        errorData.code
       );
     }
 
@@ -89,7 +92,13 @@ class ApiClient {
       return undefined as T;
     }
 
-    return response.json();
+    const json = await response.json();
+    // Backend wraps responses in { success: true, data: ... }
+    // Unwrap automatically
+    if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
+      return json.data as T;
+    }
+    return json as T;
   }
 
   async get<T>(path: string, options?: RequestOptions): Promise<T> {

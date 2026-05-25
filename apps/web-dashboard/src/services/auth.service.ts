@@ -10,26 +10,50 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  orgName: string;
+  organizationName: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  user: User;
-}
-
-export interface RefreshResponse {
-  accessToken: string;
+  expiresIn: number;
 }
 
 export const authService = {
-  login(data: LoginRequest): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/login', data);
+  async login(data: LoginRequest): Promise<{ accessToken: string; user: User }> {
+    const response = await apiClient.post<AuthResponse>('/auth/login', data);
+    // Store token temporarily to fetch user profile
+    localStorage.setItem('access_token', response.accessToken);
+    const user = await apiClient.get<any>('/auth/me');
+    return {
+      accessToken: response.accessToken,
+      user: {
+        id: user.userId,
+        name: '', // Will be fetched properly later
+        email: data.email,
+        role: user.role,
+        orgId: user.orgId,
+        permissions: user.permissions,
+      },
+    };
   },
 
-  register(data: RegisterRequest): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/register', data);
+  async register(data: RegisterRequest): Promise<{ accessToken: string; user: User }> {
+    const response = await apiClient.post<AuthResponse>('/auth/register', data);
+    // Store token temporarily to fetch user profile
+    localStorage.setItem('access_token', response.accessToken);
+    const user = await apiClient.get<any>('/auth/me');
+    return {
+      accessToken: response.accessToken,
+      user: {
+        id: user.userId,
+        name: data.name,
+        email: data.email,
+        role: user.role,
+        orgId: user.orgId,
+        permissions: user.permissions,
+      },
+    };
   },
 
   refresh(refreshToken: string): Promise<RefreshResponse> {

@@ -23,7 +23,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await register({ name, email, password, orgName });
+      await register({ name, email, password, organizationName: orgName });
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -40,7 +40,7 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
               {error}
             </div>
           )}
