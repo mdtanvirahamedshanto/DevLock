@@ -25,7 +25,18 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('access_token');
+    // Try direct localStorage first (set during login)
+    const direct = localStorage.getItem('access_token');
+    if (direct) return direct;
+    // Fallback: read from Zustand persisted state
+    try {
+      const stored = localStorage.getItem('devlock-auth');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed?.state?.accessToken || null;
+      }
+    } catch {}
+    return null;
   }
 
   private buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
