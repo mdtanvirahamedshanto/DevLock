@@ -69,11 +69,11 @@ export async function sdkAuth(req: Request, _res: Response, next: NextFunction):
   // Attach project context
   req.project = {
     id: project._id.toString(),
-    orgId: project.orgId.toString(),
+    orgId: (project as any).orgId?.toString() ?? project.tenantId.toString(),
     publicKey: project.publicKey,
     secretKey: project.secretKey,
     allowedDomains: project.allowedDomains,
-    domainPolicy: project.domainPolicy ?? 'warn',
+    domainPolicy: (project as any).domainPolicy ?? 'warn',
     settings: project.settings ?? {},
   };
 

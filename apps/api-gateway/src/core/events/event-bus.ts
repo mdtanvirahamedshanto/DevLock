@@ -1,5 +1,4 @@
 import type { Redis } from 'ioredis';
-import type { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
 import { createLogger } from '@devlock/logger';
 
@@ -15,7 +14,7 @@ export interface EventEnvelope {
 export class EventBus {
   constructor(
     private redis: Redis,
-    private eventQueue: Queue,
+    private eventQueue?: { add: (name: string, data: unknown, opts?: unknown) => Promise<unknown> },
   ) {}
 
   /**
@@ -39,7 +38,7 @@ export class EventBus {
     await this.redis.publish(channel, JSON.stringify(envelope));
 
     // Reliable: enqueue for async processing
-    await this.eventQueue.add(event, envelope, {
+    await this.eventQueue?.add(event, envelope, {
       removeOnComplete: 1000,
       removeOnFail: 5000,
       attempts: 3,

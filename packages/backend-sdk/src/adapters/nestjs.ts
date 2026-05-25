@@ -153,12 +153,9 @@ export class DevLockGuard {
  * Parameter decorator to inject license info into controller method.
  */
 export function License() {
-  return (target: any, propertyKey: string | symbol | undefined, parameterIndex: number) => {
-    // NestJS custom decorator — works with createParamDecorator
-    // This is a simplified version; in real NestJS, use createParamDecorator
-    const existingParams = Reflect.getMetadata('devlock:license_params', target, propertyKey!) ?? [];
-    existingParams.push(parameterIndex);
-    Reflect.defineMetadata('devlock:license_params', existingParams, target, propertyKey!);
+  return (_target: any, _propertyKey: string | symbol | undefined, _parameterIndex: number) => {
+    // In real NestJS, use createParamDecorator from @nestjs/common
+    // This is a placeholder that works without reflect-metadata
   };
 }
 

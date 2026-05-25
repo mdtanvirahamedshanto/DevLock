@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as IRouter } from 'express';
 import { SDKController } from './sdk.controller.js';
 import { sdkAuth } from '../../middleware/sdk-auth.js';
 import { validate } from '../../middleware/validate.js';
 import { rateLimiter } from '../../middleware/rate-limiter.js';
 import { SDKInitSchema, SDKValidateSchema, SDKHeartbeatSchema, SDKTelemetrySchema } from './sdk.validator.js';
 
-const router = Router();
+const router: IRouter = Router();
 const controller = new SDKController();
 
 // All SDK routes use API key + HMAC auth (not JWT)

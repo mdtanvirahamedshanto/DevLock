@@ -16,7 +16,7 @@ const PORT = Number(process.env['PORT'] ?? 3000);
 
 // ── Create Express App ────────────────────────────────────────────────────────
 
-const app = express();
+const app: express.Express = express();
 
 // Trust proxy (behind nginx/load balancer)
 app.set('trust proxy', 1);

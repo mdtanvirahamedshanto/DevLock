@@ -1,10 +1,16 @@
-import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
-import { promisify } from 'util';
+import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'crypto';
 
-const scryptAsync = promisify(scrypt);
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
-const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 };
+
+function scryptAsync(password: string | Buffer, salt: Buffer, keylen: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scryptCb(password, salt, keylen, { N: 16384, r: 8, p: 1 }, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
 
 /**
  * Hash a password using scrypt.
@@ -12,7 +18,7 @@ const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 };
  */
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(SALT_LENGTH);
-  const hash = (await scryptAsync(password, salt, KEY_LENGTH, SCRYPT_PARAMS)) as Buffer;
+  const hash = await scryptAsync(password, salt, KEY_LENGTH);
   return `${salt.toString('hex')}:${hash.toString('hex')}`;
 }
 
@@ -26,7 +32,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 
   const salt = Buffer.from(saltHex, 'hex');
   const expectedHash = Buffer.from(hashHex, 'hex');
-  const actualHash = (await scryptAsync(password, salt, KEY_LENGTH, SCRYPT_PARAMS)) as Buffer;
+  const actualHash = await scryptAsync(password, salt, KEY_LENGTH);
 
   return timingSafeEqual(expectedHash, actualHash);
 }

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Router as IRouter } from 'express';
 import { LicenseController } from './license.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
@@ -9,7 +9,7 @@ import {
   SuspendLicenseSchema,
 } from './license.validator.js';
 
-const router = Router({ mergeParams: true });
+const router: IRouter = Router({ mergeParams: true });
 const controller = new LicenseController();
 
 // All license routes require authentication

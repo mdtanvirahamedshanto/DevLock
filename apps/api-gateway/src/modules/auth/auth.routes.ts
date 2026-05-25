@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as IRouter } from 'express';
 import { AuthController } from './auth.controller.js';
 import { validate } from '../../middleware/validate.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { rateLimiter } from '../../middleware/rate-limiter.js';
 import { RegisterSchema, LoginSchema, RefreshSchema } from './auth.validator.js';
 
-const router = Router();
+const router: IRouter = Router();
 const controller = new AuthController();
 
 // Public routes (rate limited for brute force protection)

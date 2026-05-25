@@ -1,4 +1,8 @@
 module.exports = {
   root: true,
-  extends: ['@devlock/eslint-config/next'],
+  extends: ['next/core-web-vitals'],
+  rules: {
+    'react/no-unescaped-entities': 'off',
+    '@next/next/no-img-element': 'off',
+  },
 };

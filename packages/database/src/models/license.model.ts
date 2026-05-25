@@ -4,6 +4,7 @@ export interface ILicenseDocument extends Document {
   tenantId: mongoose.Types.ObjectId;
   projectId: mongoose.Types.ObjectId;
   key: string;
+  keyHash: string;
   status: 'active' | 'suspended' | 'expired' | 'revoked' | 'trial';
   type: 'perpetual' | 'subscription' | 'trial' | 'floating';
   activations: Array<{
@@ -17,10 +18,13 @@ export interface ILicenseDocument extends Document {
   maxActivations: number;
   features: string[];
   metadata: Record<string, unknown>;
+  customerEmail?: string;
+  customerName?: string;
   expiresAt?: Date;
   suspendedAt?: Date;
   revokedAt?: Date;
   lastValidatedAt?: Date;
+  totalValidations: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +34,7 @@ const licenseSchema = new Schema<ILicenseDocument>(
     tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true },
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
     key: { type: String, required: true, unique: true },
+    keyHash: { type: String, unique: true, sparse: true },
     status: {
       type: String,
       enum: ['active', 'suspended', 'expired', 'revoked', 'trial'],
@@ -53,6 +58,9 @@ const licenseSchema = new Schema<ILicenseDocument>(
     maxActivations: { type: Number, required: true, default: 1, min: 1 },
     features: { type: [String], default: [] },
     metadata: { type: Schema.Types.Mixed, default: {} },
+    customerEmail: { type: String },
+    customerName: { type: String },
+    totalValidations: { type: Number, default: 0 },
     expiresAt: Date,
     suspendedAt: Date,
     revokedAt: Date,

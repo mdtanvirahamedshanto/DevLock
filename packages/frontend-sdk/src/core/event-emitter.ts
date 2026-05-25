@@ -1,6 +1,6 @@
 import type { DevLockEvent } from '../types.js';
 
-type Listener = (...args: unknown[]) => void;
+type Listener = (...args: any[]) => void;
 
 /**
  * Lightweight typed event emitter for SDK internal communication.

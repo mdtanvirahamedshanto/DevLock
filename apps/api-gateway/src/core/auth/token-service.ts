@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 
 export interface AccessTokenPayload {
@@ -27,11 +27,11 @@ export class TokenService {
   }
 
   generateAccessToken(payload: AccessTokenPayload): string {
-    return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.accessExpiry,
-      issuer: this.issuer,
-      audience: 'devlock-api',
-    });
+    return jwt.sign(
+      { sub: payload.sub, orgId: payload.orgId, role: payload.role, permissions: payload.permissions } as JwtPayload,
+      this.jwtSecret,
+      { expiresIn: this.accessExpiry, issuer: this.issuer, audience: 'devlock-api' } as jwt.SignOptions,
+    );
   }
 
   verifyAccessToken(token: string): DecodedAccessToken {
