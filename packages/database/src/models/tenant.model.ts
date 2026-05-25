@@ -24,7 +24,7 @@ const tenantSchema = new Schema<ITenantDocument>(
     name: { type: String, required: true, trim: true, maxlength: 100 },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     plan: { type: String, enum: ['free', 'pro', 'business', 'enterprise'], default: 'free' },
-    owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    owner: { type: Schema.Types.ObjectId, ref: 'User' },
     settings: {
       customDomain: String,
       branding: { logo: String, primaryColor: String, companyName: String },

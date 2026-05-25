@@ -44,30 +44,30 @@ export class AuthService {
     // Hash password
     const passwordHash = await hashPassword(input.password);
 
-    // Create user
-    const user = await UserModel.create({
-      email: input.email.toLowerCase(),
-      name: input.name,
-      passwordHash,
-      role: 'owner',
-      mfa: { enabled: false },
-      emailVerifiedAt: null,
-    });
-
-    // Create organization
+    // Create organization first (user needs tenantId)
     const slug = this.generateSlug(input.organizationName);
     const org = await TenantModel.create({
       name: input.organizationName,
       slug,
       plan: 'free',
-      owner: user._id,
+      owner: null, // Will update after user creation
       settings: {},
       billing: {},
     });
 
-    // Update user with tenantId
-    user.tenantId = org._id;
-    await user.save();
+    // Create user with tenantId
+    const user = await UserModel.create({
+      tenantId: org._id,
+      email: input.email.toLowerCase(),
+      name: input.name,
+      passwordHash,
+      role: 'owner',
+      mfa: { enabled: false },
+    });
+
+    // Update org owner
+    org.owner = user._id;
+    await org.save();
 
     // Generate tokens
     return this.generateTokens(user._id.toString(), org._id.toString(), 'owner');
