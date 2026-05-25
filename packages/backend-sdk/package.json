@@ -1,6 +1,6 @@
 {
   "name": "devlock-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DevLock Backend SDK — License enforcement, remote management, and developer protection for Node.js applications",
   "author": "DevLock",
   "license": "MIT",
