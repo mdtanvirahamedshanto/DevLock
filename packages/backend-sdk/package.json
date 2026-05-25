@@ -1,32 +1,45 @@
 {
-  "name": "@devlock/backend-sdk",
-  "version": "0.1.0",
-  "description": "DevLock Backend SDK — License enforcement and remote management for Node.js",
+  "name": "@devlock/node",
+  "version": "1.0.0",
+  "description": "DevLock Backend SDK — License enforcement, remote management, and developer protection for Node.js applications",
+  "author": "DevLock",
   "license": "MIT",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./express": {
-      "types": "./dist/middleware/express.d.ts",
-      "import": "./dist/middleware/express.js"
+      "types": "./dist/express.d.ts",
+      "import": "./dist/express.js",
+      "require": "./dist/express.cjs"
+    },
+    "./fastify": {
+      "types": "./dist/fastify.d.ts",
+      "import": "./dist/fastify.js",
+      "require": "./dist/fastify.cjs"
+    },
+    "./nestjs": {
+      "types": "./dist/nestjs.d.ts",
+      "import": "./dist/nestjs.js",
+      "require": "./dist/nestjs.cjs"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "clean": "rm -rf dist .turbo",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/ --ext .ts",
-    "lint:fix": "eslint src/ --ext .ts --fix",
     "test": "vitest run",
-    "test:ci": "vitest run --coverage"
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@devlock/shared-types": "workspace:*",
     "socket.io-client": "^4.7.0"
   },
   "devDependencies": {
@@ -34,14 +47,23 @@
     "@devlock/tsconfig": "workspace:*",
     "@types/express": "^4.17.21",
     "eslint": "^8.57.0",
+    "express": "^4.19.0",
+    "tsup": "^8.1.0",
     "typescript": "^5.5.0",
     "vitest": "^1.6.0"
   },
   "peerDependencies": {
-    "express": "^4.18.0 || ^5.0.0"
+    "express": "^4.17.0 || ^5.0.0",
+    "fastify": "^4.0.0 || ^5.0.0",
+    "@nestjs/common": "^10.0.0",
+    "ioredis": "^5.0.0"
   },
   "peerDependenciesMeta": {
-    "express": { "optional": true }
+    "express": { "optional": true },
+    "fastify": { "optional": true },
+    "@nestjs/common": { "optional": true },
+    "ioredis": { "optional": true }
   },
-  "keywords": ["devlock", "sdk", "node", "express", "licensing"]
+  "keywords": ["devlock", "sdk", "licensing", "node", "express", "fastify", "nestjs", "middleware", "feature-flags"],
+  "sideEffects": false
 }
