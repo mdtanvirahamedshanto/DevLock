@@ -8,8 +8,8 @@ import { HttpClient } from './http.js';
 import { CacheManager } from './cache.js';
 import { WebSocketManager } from './websocket.js';
 
-const DEFAULT_API = 'https://api.devlock.io';
-const DEFAULT_WS = 'wss://ws.devlock.io';
+const DEFAULT_API = 'https://dl-api.tashanto.com';
+const DEFAULT_WS = 'wss://dl-ws.tashanto.com';
 const DEFAULT_SYNC_INTERVAL = 300_000;
 const DEFAULT_CACHE_TTL = 300_000;
 const DEFAULT_GRACE_HOURS = 72;

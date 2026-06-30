@@ -37,6 +37,16 @@ yarn add devlock-client
 pnpm add devlock-client
 ```
 
+## Setup & Dashboard
+
+Before using the SDK, you need to create a project and obtain your keys from the DevLock Dashboard:
+
+1. Go to **[DevLock Dashboard](https://devlock.tashanto.com)**.
+2. Sign in and navigate to the **Projects** section.
+3. Click **Create Project** and fill in your details.
+4. Copy your **Project Key** (starts with `pk_live_...`).
+5. (Optional) Generate a **License Key** for your users from the Licenses page.
+
 ## Quick Start
 
 ### Vanilla TypeScript / JavaScript
@@ -165,8 +175,8 @@ const devlock = new DevLock({
 
   // Optional
   licenseKey: 'DLCK-XXXX-XXXX-XXXX-XXXX',
-  apiUrl: 'https://api.devlock.io',        // Custom API URL
-  wsUrl: 'wss://ws.devlock.io',            // Custom WebSocket URL
+  apiUrl: 'https://dl-api.tashanto.com',    // Custom API URL
+  wsUrl: 'wss://dl-ws.tashanto.com',        // Custom WebSocket URL
   environment: 'production',                // 'production' | 'staging' | 'development'
   debug: false,                             // Enable console logging
   offlineGraceHours: 72,                   // Hours to allow offline operation

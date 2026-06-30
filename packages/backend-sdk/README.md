@@ -36,6 +36,15 @@ yarn add devlock-sdk
 pnpm add devlock-sdk
 ```
 
+## Setup & Dashboard
+
+Before using the SDK, you need to create a project and obtain your keys from the DevLock Dashboard:
+
+1. Go to **[DevLock Dashboard](https://devlock.tashanto.com)**.
+2. Sign in and navigate to the **Projects** section.
+3. Click **Create Project** and fill in your details.
+4. Copy your **Project ID** and **Secret Key** (`sk_live_...`). Note that the Secret Key must be kept secure and never exposed to the frontend.
+
 ## Quick Start
 
 ### Express.js (Recommended)
@@ -161,8 +170,8 @@ const devlock = new DevLock({
   projectId: 'proj_xxx',             // Project ID
 
   // Optional
-  apiUrl: 'https://api.devlock.io',  // Custom API URL
-  wsUrl: 'wss://ws.devlock.io',      // Custom WebSocket URL
+  apiUrl: 'https://dl-api.tashanto.com',  // Custom API URL
+  wsUrl: 'wss://dl-ws.tashanto.com',      // Custom WebSocket URL
   environment: 'production',          // 'production' | 'staging' | 'development'
   syncInterval: 300000,               // Config sync interval (ms, default: 5min)
   cacheTtl: 300000,                   // License cache TTL (ms, default: 5min)

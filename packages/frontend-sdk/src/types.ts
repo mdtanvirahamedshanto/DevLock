@@ -5,9 +5,9 @@ export interface DevLockConfig {
   projectKey: string;
   /** License key to validate (DLCK-XXXX-XXXX-XXXX-XXXX) */
   licenseKey?: string;
-  /** API base URL (default: https://api.devlock.io) */
+  /** API base URL (default: https://dl-api.tashanto.com) */
   apiUrl?: string;
-  /** WebSocket URL (default: wss://ws.devlock.io) */
+  /** WebSocket URL (default: wss://dl-ws.tashanto.com) */
   wsUrl?: string;
   /** Environment (default: production) */
   environment?: 'production' | 'staging' | 'development';

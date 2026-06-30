@@ -11,8 +11,8 @@ import { WatermarkManager } from './watermark.js';
 import { generateFingerprint } from './fingerprint.js';
 
 const SDK_VERSION = '1.0.0';
-const DEFAULT_API = 'https://api.devlock.io';
-const DEFAULT_WS = 'wss://ws.devlock.io';
+const DEFAULT_API = 'https://dl-api.tashanto.com';
+const DEFAULT_WS = 'wss://dl-ws.tashanto.com';
 const DEFAULT_HEARTBEAT = 30_000;
 const DEFAULT_GRACE_HOURS = 72;
 

@@ -25,7 +25,7 @@ interface MiddlewareConfig {
 }
 
 export function createDevLockMiddleware(config: MiddlewareConfig) {
-  const apiUrl = config.apiUrl ?? 'https://api.devlock.io';
+  const apiUrl = config.apiUrl ?? 'https://dl-api.tashanto.com';
   const protectedPaths = config.protectedPaths ?? ['/'];
 
   return async function middleware(request: Request): Promise<Response | undefined> {
