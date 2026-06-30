@@ -1,27 +1,19 @@
 {
   "name": "devlock",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "DevLock — Software Licensing, Remote Management & Developer Protection Platform",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev --concurrency=20",
-    "dev:api": "turbo run dev --filter=@devlock/api-gateway...",
-    "dev:web": "turbo run dev --filter=@devlock/web-dashboard...",
-    "lint": "turbo run lint",
-    "lint:fix": "turbo run lint:fix",
+    "dev": "npm run dev --prefix frontend & npm run dev --prefix backend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "start": "npm start --prefix backend & npm start --prefix frontend",
+    "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "test:ci": "turbo run test:ci",
-    "clean": "turbo run clean && rm -rf node_modules .turbo",
     "docker:up": "docker compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.yml down",
     "docker:build": "docker compose -f docker/docker-compose.yml build",
     "docker:prod": "docker compose -f docker/docker-compose.prod.yml up -d",
-    "db:seed": "turbo run db:seed --filter=@devlock/database",
-    "db:migrate": "turbo run db:migrate --filter=@devlock/database",
     "generate:keys": "tsx scripts/generate-keys.ts",
     "prepare": "husky",
     "commitlint": "commitlint --edit"
@@ -33,17 +25,13 @@
     "lint-staged": "^15.2.0",
     "prettier": "^3.3.0",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "tsx": "^4.15.0",
-    "turbo": "^2.0.0"
+    "tsx": "^4.15.0"
   },
-  "packageManager": "pnpm@9.4.0",
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=20.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [
