@@ -78,8 +78,9 @@ class ApiClient {
 
     if (response.status === 401) {
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-        // Do not force logout aggressively, just throw ApiError. 
-        // The dashboard layout or specific components will handle redirects.
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('devlock-auth');
+        window.location.href = '/login';
       }
       throw new ApiError(401, 'Unauthorized', 'UNAUTHORIZED');
     }
