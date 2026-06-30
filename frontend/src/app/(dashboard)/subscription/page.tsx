@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, CreditCard, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+import { Select } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 interface Plan {
   _id: string;
   name: string;
@@ -21,6 +25,11 @@ export default function SubscriptionPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  
+  // Payment form state
+  const [method, setMethod] = useState('bkash');
+  const [transactionId, setTransactionId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchPlans();
@@ -35,6 +44,31 @@ export default function SubscriptionPage() {
       console.error('Failed to fetch plans', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transactionId.trim() || !selectedPlan) return;
+    
+    try {
+      setSubmitting(true);
+      await apiClient.post('/billing/manual-payment', {
+        planId: selectedPlan._id,
+        method: method,
+        transactionId: transactionId,
+        amount: selectedPlan.monthlyPrice,
+        currency: method === 'crypto' ? 'USDT' : 'BDT'
+      });
+      
+      alert("Payment Submitted! Your payment is pending review. We will activate your plan shortly.");
+      
+      setSelectedPlan(null);
+      setTransactionId('');
+    } catch (err: any) {
+      alert("Submission Failed: " + (err.message || "Something went wrong."));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -104,7 +138,7 @@ export default function SubscriptionPage() {
       )}
 
       <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl text-center">Complete Your Payment</DialogTitle>
             <DialogDescription className="text-center">
@@ -112,7 +146,7 @@ export default function SubscriptionPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <form onSubmit={handlePaymentSubmit} className="space-y-6 py-4">
             <div className="rounded-lg border bg-card p-4 space-y-3 shadow-sm">
               <h3 className="font-semibold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-pink-500" />
@@ -139,21 +173,38 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border bg-primary/10 border-primary/20 p-4 space-y-3">
-              <h3 className="font-semibold flex items-center gap-2 text-primary">
-                <Mail className="h-5 w-5" />
-                Activate Your Plan
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                After making the payment, please email us with your <strong>Transaction ID</strong> and <strong>Account Email</strong> to get your plan activated instantly.
-              </p>
-              <a href="mailto:hello@tashanto.com" className="block w-full">
-                <Button className="w-full font-bold" variant="default">
-                  Contact hello@tashanto.com
-                </Button>
-              </a>
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-primary">Submit Payment Details</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="method">Payment Method</Label>
+                <Select 
+                  value={method} 
+                  onChange={(e) => setMethod(e.target.value)}
+                  id="method"
+                >
+                  <option value="bkash">Bkash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="crypto">Crypto (USDT)</option>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trxId">Transaction ID / Hash</Label>
+                <Input 
+                  id="trxId" 
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  placeholder="e.g. 9XZB1..." 
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full font-bold" disabled={submitting}>
+                {submitting ? 'Submitting...' : 'Submit Payment for Approval'}
+              </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

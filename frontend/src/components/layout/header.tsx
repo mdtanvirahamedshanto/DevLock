@@ -27,7 +27,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
-        <OrgSwitcher />
+        <span className="hidden font-semibold lg:block text-muted-foreground text-sm tracking-wide">
+          My Workspace
+        </span>
       </div>
 
       {/* Right side */}

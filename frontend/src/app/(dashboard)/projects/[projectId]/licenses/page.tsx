@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Plus, Search, Key, MoreVertical, Ban, RotateCcw, XCircle } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatRelative } from '@/lib/utils';
@@ -25,6 +27,16 @@ export default function LicensesPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createData, setCreateData] = useState({
+    holderName: '',
+    holderEmail: '',
+    type: 'node',
+    maxDevices: 1,
+    expiresAt: '',
+  });
+
   const [confirmAction, setConfirmAction] = useState<{
     type: 'suspend' | 'revoke';
     licenseId: string;
@@ -41,6 +53,38 @@ export default function LicensesPage() {
       }),
     enabled: !!projectId,
   });
+
+  const createMutation = useMutation({
+    mutationFn: (payload: any) => licenseService.create(projectId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['licenses', projectId] });
+      setIsCreateOpen(false);
+      setCreateData({
+        holderName: '',
+        holderEmail: '',
+        type: 'node',
+        maxDevices: 1,
+        expiresAt: '',
+      });
+    },
+    onError: (err: any) => {
+      setCreateError(err.message || 'Failed to create license');
+    }
+  });
+
+  const handleCreateLicense = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError('');
+    createMutation.mutate({
+      holder: {
+        name: createData.holderName,
+        email: createData.holderEmail,
+      },
+      type: createData.type,
+      maxDevices: createData.maxDevices,
+      expiresAt: createData.expiresAt ? new Date(createData.expiresAt).toISOString() : undefined,
+    });
+  };
 
   const suspendMutation = useMutation({
     mutationFn: (licenseId: string) => licenseService.suspend(projectId, licenseId),
@@ -91,7 +135,7 @@ export default function LicensesPage() {
             <option value="trial">Trial</option>
           </Select>
         </div>
-        <Button>
+        <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create License
         </Button>
@@ -105,7 +149,7 @@ export default function LicensesPage() {
           title="No licenses found"
           description="Create your first license key for this project"
           actionLabel="Create License"
-          onAction={() => {}}
+          onAction={() => setIsCreateOpen(true)}
         />
       ) : (
         <Table>
@@ -154,26 +198,26 @@ export default function LicensesPage() {
                         Suspend
                       </DropdownMenuItem>
                     )}
-                    {(license.status === 'suspended' || license.status === 'expired') && (
-                      <DropdownMenuItem
-                        onClick={() => reactivateMutation.mutate(license.id)}
-                      >
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Reactivate
-                      </DropdownMenuItem>
-                    )}
-                    {license.status !== 'revoked' && (
-                      <>
-                        <DropdownMenuSeparator />
+                      {(license.status === 'suspended' || license.status === 'expired') && (
                         <DropdownMenuItem
-                          destructive
-                          onClick={() => setConfirmAction({ type: 'revoke', licenseId: license.id })}
+                          onClick={() => reactivateMutation.mutate(license.id)}
                         >
-                          <XCircle className="mr-2 h-4 w-4" />
-                          Revoke
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Reactivate
                         </DropdownMenuItem>
-                      </>
-                    )}
+                      )}
+                      {license.status !== 'revoked' && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={() => setConfirmAction({ type: 'revoke', licenseId: license.id })}
+                          >
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Revoke
+                          </DropdownMenuItem>
+                        </>
+                      )}
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
@@ -181,28 +225,6 @@ export default function LicensesPage() {
           </TableBody>
         </Table>
       )}
-
-      <ConfirmDialog
-        open={!!confirmAction}
-        onOpenChange={() => setConfirmAction(null)}
-        title={confirmAction?.type === 'suspend' ? 'Suspend License' : 'Revoke License'}
-        description={
-          confirmAction?.type === 'suspend'
-            ? 'This will temporarily disable the license. The holder will not be able to validate until reactivated.'
-            : 'This will permanently revoke the license. This action cannot be undone.'
-        }
-        confirmLabel={confirmAction?.type === 'suspend' ? 'Suspend' : 'Revoke'}
-        variant="destructive"
-        loading={suspendMutation.isPending || revokeMutation.isPending}
-        onConfirm={() => {
-          if (!confirmAction) return;
-          if (confirmAction.type === 'suspend') {
-            suspendMutation.mutate(confirmAction.licenseId);
-          } else {
-            revokeMutation.mutate(confirmAction.licenseId);
-          }
-        }}
-      />
     </div>
   );
 }
