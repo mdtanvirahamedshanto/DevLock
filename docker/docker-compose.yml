@@ -5,7 +5,6 @@ services:
   mongodb:
     image: mongo:7
     container_name: devlock-mongo
-    ports: ['27017:27017']
     volumes: ['./volumes/mongo:/data/db']
     command: ['--replSet', 'rs0', '--bind_ip_all']
     healthcheck:
@@ -23,7 +22,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: devlock-redis
-    ports: ['6379:6379']
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes: ['./volumes/redis:/data']
     healthcheck:
