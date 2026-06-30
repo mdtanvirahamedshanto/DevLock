@@ -1,7 +1,7 @@
 {
   "name": "devlock-client",
-  "version": "1.0.3",
-  "description": "DevLock Frontend SDK — License enforcement, remote management, and developer protection for web applications",
+  "version": "1.0.4",
+  "description": "DevLock Frontend SDK for React, Next.js, and Vanilla JS. Integrate license validation, remote kill-switch, feature flags, and domain locking into your web applications securely.",
   "author": "DevLock",
   "license": "MIT",
   "main": "./dist/index.cjs",
@@ -41,14 +41,12 @@
     "lint": "eslint src/ --ext .ts,.tsx",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "socket.io-client": "^4.7.0"
   },
   "devDependencies": {
-    "@devlock/eslint-config": "workspace:*",
-    "@devlock/tsconfig": "workspace:*",
     "@types/react": "^18.3.0",
     "eslint": "^8.57.0",
     "react": "^18.3.0",
@@ -62,8 +60,12 @@
     "vue": ">=3.0.0"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true },
-    "vue": { "optional": true }
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   },
   "keywords": [
     "devlock",

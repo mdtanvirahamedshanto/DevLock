@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { ProjectModel, type IProjectDocument } from '@/database';
+import { ProjectModel, TenantModel, PlanModel, type IProjectDocument } from '@/database';
 import mongoose from 'mongoose';
 import { NotFoundError } from '../../core/errors/index.js';
 
@@ -37,10 +37,10 @@ export class ProjectService {
 
   async create(tenantId: string, input: CreateProjectInput) {
     // Check dynamic project limit
-    const tenant = await mongoose.model('Tenant').findById(tenantId).lean();
+    const tenant = await TenantModel.findById(tenantId).lean();
     if (!tenant) throw new NotFoundError('Tenant not found');
 
-    const plan = await mongoose.model('Plan').findOne({ key: tenant.plan }).lean();
+    const plan = await PlanModel.findOne({ key: tenant.plan }).lean();
     const maxProjects = plan?.maxProjects ?? 5; // Default to 5 if plan not found
 
     const currentProjectCount = await ProjectModel.countDocuments({ tenantId: new mongoose.Types.ObjectId(tenantId) });
