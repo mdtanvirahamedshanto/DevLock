@@ -82,10 +82,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               collapsed && 'justify-center px-2'
             )}
-            title={collapsed ? 'Tenants & Subs' : undefined}
+            title={collapsed ? 'Developers & Subs' : undefined}
           >
             <Users className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>Tenants & Subs</span>}
+            {!collapsed && <span>Developers & Subs</span>}
           </Link>
           <Link
             href="/superadmin/pricing"

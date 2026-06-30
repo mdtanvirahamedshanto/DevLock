@@ -36,6 +36,19 @@ export class ProjectService {
   }
 
   async create(tenantId: string, input: CreateProjectInput) {
+    // Check dynamic project limit
+    const tenant = await mongoose.model('Tenant').findById(tenantId).lean();
+    if (!tenant) throw new NotFoundError('Tenant not found');
+
+    const plan = await mongoose.model('Plan').findOne({ key: tenant.plan }).lean();
+    const maxProjects = plan?.maxProjects ?? 5; // Default to 5 if plan not found
+
+    const currentProjectCount = await ProjectModel.countDocuments({ tenantId: new mongoose.Types.ObjectId(tenantId) });
+
+    if (currentProjectCount >= maxProjects) {
+      throw new Error(`Project limit reached. Your current plan (${tenant.plan}) allows up to ${maxProjects} projects.`);
+    }
+
     const publicKey = `pk_live_${randomBytes(16).toString('hex')}`;
     const secretKey = `sk_live_${randomBytes(24).toString('hex')}`;
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Edit3, Building, Search, Activity } from 'lucide-react';
+import { Users, Edit3, User, Search, Activity } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 interface Tenant {
@@ -13,10 +13,15 @@ interface Tenant {
   createdAt: string;
 }
 
-const PLAN_OPTIONS = ['free', 'starter', 'pro', 'business', 'enterprise'];
+interface Plan {
+  _id: string;
+  key: string;
+  name: string;
+}
 
 export default function SuperAdminTenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -24,25 +29,29 @@ export default function SuperAdminTenantsPage() {
   const [updating, setUpdating] = useState(false);
   const [search, setSearch] = useState('');
 
-  const fetchTenants = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const tenantsData = await apiClient.get<Tenant[]>('/admin/tenants');
+      const [tenantsData, plansData] = await Promise.all([
+        apiClient.get<Tenant[]>('/admin/tenants'),
+        apiClient.get<Plan[]>('/admin/plans')
+      ]);
       setTenants(tenantsData || []);
+      setPlans(plansData || []);
     } catch (err: any) {
-      setError(err.message || 'Failed to load tenants');
+      setError(err.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTenants();
+    fetchData();
   }, []);
 
   const handleEditClick = (tenant: Tenant) => {
     setEditingId(tenant._id);
-    setSelectedPlan(tenant.plan || 'free');
+    setSelectedPlan(tenant.plan || (plans.length > 0 ? plans[0].key : 'free'));
   };
 
   const handleUpdatePlan = async (id: string) => {
@@ -73,15 +82,15 @@ export default function SuperAdminTenantsPage() {
             <Users className="h-8 w-8 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Tenants & Subscriptions</h1>
-            <p className="mt-1 text-sm text-gray-500">Manage all organizations and manually override their subscription plans.</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Developers & Subscriptions</h1>
+            <p className="mt-1 text-sm text-gray-500">Manage all solo developers and manually override their subscription plans.</p>
           </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Search tenants..." 
+            placeholder="Search developers..." 
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full sm:w-64 transition-all shadow-sm"
@@ -92,8 +101,8 @@ export default function SuperAdminTenantsPage() {
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-6 flex justify-between items-center bg-gray-50/50">
           <div className="flex items-center gap-2">
-            <Building className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-900">All Organizations ({filteredTenants.length})</h2>
+            <User className="w-5 h-5 text-gray-500" />
+            <h2 className="text-lg font-semibold text-gray-900">All Developers ({filteredTenants.length})</h2>
           </div>
         </div>
 
@@ -105,16 +114,16 @@ export default function SuperAdminTenantsPage() {
           </div>
         ) : tenants.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
-            <Building className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-lg font-medium text-gray-900">No tenants found.</p>
+            <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-lg font-medium text-gray-900">No developers found.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
                 <tr>
-                  <th className="px-6 py-4 font-medium tracking-wider">Organization</th>
-                  <th className="px-6 py-4 font-medium tracking-wider">Owner</th>
+                  <th className="px-6 py-4 font-medium tracking-wider">Workspace</th>
+                  <th className="px-6 py-4 font-medium tracking-wider">Developer</th>
                   <th className="px-6 py-4 font-medium tracking-wider">Current Plan</th>
                   <th className="px-6 py-4 font-medium tracking-wider">Joined Date</th>
                   <th className="px-6 py-4 text-right font-medium tracking-wider">Actions</th>
@@ -138,9 +147,9 @@ export default function SuperAdminTenantsPage() {
                           value={selectedPlan}
                           onChange={(e) => setSelectedPlan(e.target.value)}
                         >
-                          {PLAN_OPTIONS.map((plan) => (
-                            <option key={plan} value={plan}>
-                              {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                          {plans.map((plan) => (
+                            <option key={plan.key} value={plan.key}>
+                              {plan.name}
                             </option>
                           ))}
                         </select>

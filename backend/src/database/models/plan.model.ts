@@ -7,6 +7,7 @@ export interface IPlanDocument extends Document {
   price: number;
   currency: string;
   features: string[];
+  maxProjects: number;
   isPopular: boolean;
   isActive: boolean;
   createdAt: Date;
@@ -21,6 +22,7 @@ const planSchema = new Schema<IPlanDocument>(
     price: { type: Number, required: true, min: 0 },
     currency: { type: String, default: 'USD', uppercase: true },
     features: [{ type: String }],
+    maxProjects: { type: Number, required: true, default: 5 },
     isPopular: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
   },

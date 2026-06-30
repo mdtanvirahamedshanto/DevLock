@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, Activity } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 interface Plan {
@@ -12,6 +12,7 @@ interface Plan {
   price: number;
   currency: string;
   features: string[];
+  maxProjects: number;
   isPopular: boolean;
   isActive: boolean;
 }
@@ -136,6 +137,12 @@ export default function PricingPage() {
                 <span className="text-sm font-medium text-gray-500">/{plan.currency}</span>
               </div>
               <ul className="mb-6 flex-1 space-y-3">
+                <li className="flex items-center gap-3 text-sm text-gray-600 font-medium">
+                  <div className="flex-shrink-0 p-1 bg-indigo-50 rounded-full">
+                    <Activity className="h-3 w-3 text-indigo-600" />
+                  </div>
+                  <span className="font-bold text-gray-900">{plan.maxProjects === 9999 ? 'Unlimited' : plan.maxProjects}</span> Projects Allowed
+                </li>
                 {plan.features?.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm text-gray-600 font-medium">
                     <div className="flex-shrink-0 p-1 bg-indigo-50 rounded-full">
@@ -197,6 +204,16 @@ export default function PricingPage() {
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-gray-700">Max Projects Allowed</label>
+                <input
+                  type="number"
+                  required
+                  value={currentPlan?.maxProjects || 5}
+                  onChange={(e) => setCurrentPlan({ ...currentPlan, maxProjects: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-gray-700">Features (comma separated)</label>
