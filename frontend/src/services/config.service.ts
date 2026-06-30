@@ -15,7 +15,7 @@ export interface ConfigNotification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'critical';
+  type: 'info' | 'warning' | 'critical' | 'error' | 'payment';
   active: boolean;
   createdAt: string;
 }

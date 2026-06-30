@@ -8,6 +8,7 @@ import { adminRoutes } from '../modules/admin/admin.routes.js';
 import { billingRoutes } from '../modules/billing/billing.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
+import { ConfigController } from '../modules/projects/config.controller.js';
 
 export function createRoutes(): Router {
   const router = Router();
@@ -49,12 +50,26 @@ export function createRoutes(): Router {
   });
 
   // Config & Commands
-  router.get('/projects/:projectId/config', authenticate, authorize('config:read'), (_req, res) => {
-    res.json({ success: true, data: {} });
+  const configController = new ConfigController();
+
+  router.get('/projects/:projectId/config', authenticate, authorize('config:read'), (req, res, next) => {
+    configController.getConfig(req, res).catch(next);
   });
 
-  router.put('/projects/:projectId/config', authenticate, authorize('config:update'), (_req, res) => {
-    res.json({ success: true, data: { updated: true } });
+  router.put('/projects/:projectId/config', authenticate, authorize('config:update'), (req, res, next) => {
+    configController.updateConfig(req, res).catch(next);
+  });
+
+  router.post('/projects/:projectId/config/kill-switch/activate', authenticate, authorize('config:update'), (req, res, next) => {
+    configController.activateKillSwitch(req, res).catch(next);
+  });
+
+  router.post('/projects/:projectId/config/kill-switch/deactivate', authenticate, authorize('config:update'), (req, res, next) => {
+    configController.deactivateKillSwitch(req, res).catch(next);
+  });
+
+  router.post('/projects/:projectId/config/maintenance', authenticate, authorize('config:update'), (req, res, next) => {
+    configController.toggleMaintenance(req, res).catch(next);
   });
 
   // Feature Flags

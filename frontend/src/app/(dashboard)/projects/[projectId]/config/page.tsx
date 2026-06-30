@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FormSkeleton } from '@/components/shared/loading-skeleton';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { AlertTriangle, Wrench, Bell } from 'lucide-react';
 import { useState } from 'react';
 import { formatRelative } from '@/lib/utils';
@@ -19,11 +22,23 @@ export default function ConfigPage() {
   const queryClient = useQueryClient();
   const [killSwitchDialog, setKillSwitchDialog] = useState(false);
   const [killSwitchReason, setKillSwitchReason] = useState('');
+  const [notifDialog, setNotifDialog] = useState(false);
+  const [notifMessage, setNotifMessage] = useState('');
+  const [notifType, setNotifType] = useState('payment');
 
   const { data: config, isLoading } = useQuery({
     queryKey: ['config', projectId],
     queryFn: () => configService.getConfig(projectId),
     enabled: !!projectId,
+  });
+
+  const updateConfigMutation = useMutation({
+    mutationFn: (data: any) => configService.updateConfig(projectId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['config', projectId] });
+      setNotifDialog(false);
+      setNotifMessage('');
+    },
   });
 
   const maintenanceMutation = useMutation({
@@ -137,6 +152,12 @@ export default function ConfigPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-sm font-medium">Active Notifications</h3>
+            <Button variant="outline" size="sm" onClick={() => setNotifDialog(true)}>
+              Add Notification
+            </Button>
+          </div>
           {config?.notifications?.length ? (
             <div className="space-y-3">
               {config.notifications.map((notification) => (
@@ -146,12 +167,12 @@ export default function ConfigPage() {
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{notification.title}</p>
+                      <p className="text-sm font-medium">{notification.title || notification.type}</p>
                       <Badge
                         variant={
-                          notification.type === 'critical'
+                          notification.type === 'critical' || notification.type === 'error'
                             ? 'destructive'
-                            : notification.type === 'warning'
+                            : notification.type === 'payment' || notification.type === 'warning'
                             ? 'warning'
                             : 'secondary'
                         }
@@ -164,9 +185,18 @@ export default function ConfigPage() {
                       {formatRelative(notification.createdAt)}
                     </p>
                   </div>
-                  <Badge variant={notification.active ? 'success' : 'outline'}>
-                    {notification.active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => {
+                      updateConfigMutation.mutate({
+                        notifications: config.notifications.filter(n => n.id !== notification.id)
+                      });
+                    }}
+                  >
+                    Remove
+                  </Button>
                 </div>
               ))}
             </div>
@@ -177,16 +207,100 @@ export default function ConfigPage() {
       </Card>
 
       {/* Kill Switch Confirmation */}
-      <ConfirmDialog
-        open={killSwitchDialog}
-        onOpenChange={setKillSwitchDialog}
-        title="Activate Kill Switch"
-        description="This will immediately disable ALL license validations for this project. All SDK clients will receive a kill-switch response. Are you sure?"
-        confirmLabel="Activate"
-        variant="destructive"
-        loading={killSwitchActivateMutation.isPending}
-        onConfirm={() => killSwitchActivateMutation.mutate(killSwitchReason || 'Emergency shutdown')}
-      />
+      <Dialog open={killSwitchDialog} onOpenChange={setKillSwitchDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Activate Kill Switch</DialogTitle>
+            <DialogDescription>
+              This will immediately disable ALL license validations for this project. All SDK clients will receive a kill-switch response. Are you sure?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Lock Message / Reason</Label>
+              <Input
+                id="reason"
+                placeholder="e.g. Payment Due"
+                value={killSwitchReason}
+                onChange={(e) => setKillSwitchReason(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                This message will be sent to the SDK clients and displayed to the end-users.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setKillSwitchDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => killSwitchActivateMutation.mutate(killSwitchReason || 'Emergency shutdown')}
+                disabled={killSwitchActivateMutation.isPending}
+              >
+                {killSwitchActivateMutation.isPending ? 'Activating...' : 'Activate'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Notification Dialog */}
+      <Dialog open={notifDialog} onOpenChange={setNotifDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Notification</DialogTitle>
+            <DialogDescription>
+              Create a message that will be shown in the client application.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <select
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={notifType}
+                onChange={(e) => setNotifType(e.target.value)}
+              >
+                <option value="payment">Payment Warning</option>
+                <option value="warning">General Warning</option>
+                <option value="error">Error</option>
+                <option value="info">Info</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <Input
+                placeholder="e.g. Payment is due next week."
+                value={notifMessage}
+                onChange={(e) => setNotifMessage(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setNotifDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  const newNotif = {
+                    id: Math.random().toString(36).substring(7),
+                    title: notifType === 'payment' ? 'Payment Due' : notifType.toUpperCase(),
+                    type: notifType,
+                    severity: notifType === 'payment' ? 'high' : 'medium',
+                    message: notifMessage,
+                    active: true,
+                    dismissible: true,
+                  };
+                  updateConfigMutation.mutate({
+                    notifications: [...(config?.notifications || []), newNotif],
+                  });
+                }}
+                disabled={!notifMessage || updateConfigMutation.isPending}
+              >
+                {updateConfigMutation.isPending ? 'Adding...' : 'Add'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
