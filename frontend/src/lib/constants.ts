@@ -67,28 +67,14 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     icon: BarChart3,
     permission: 'analytics:read',
   },
+  {
+    title: 'Subscription',
+    href: '/subscription',
+    icon: CreditCard,
+  },
 ];
 
-export const ORG_NAV_ITEMS: NavItem[] = [
-  {
-    title: 'Organization',
-    href: '/organization',
-    icon: Shield,
-    permission: 'org:read',
-  },
-  {
-    title: 'Members',
-    href: '/organization/members',
-    icon: Users,
-    permission: 'org:manage_members',
-  },
-  {
-    title: 'Billing',
-    href: '/organization/billing',
-    icon: CreditCard,
-    permission: 'org:manage_billing',
-  },
-];
+
 
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
   {

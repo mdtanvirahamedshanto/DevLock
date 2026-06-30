@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useAuthStore } from '@/stores/auth-store';
-import { MAIN_NAV_ITEMS, ORG_NAV_ITEMS, BOTTOM_NAV_ITEMS } from '@/lib/constants';
+import { MAIN_NAV_ITEMS, BOTTOM_NAV_ITEMS } from '@/lib/constants';
 import { ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -79,12 +79,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         <Separator className="my-3" />
 
-        {!collapsed && (
-          <p className="mb-2 px-3 text-xs font-semibold uppercase text-muted-foreground">
-            Organization
-          </p>
-        )}
-        <div className="space-y-1">{renderNavItems(ORG_NAV_ITEMS)}</div>
+
 
         {user?.isSuperAdmin && (
           <>

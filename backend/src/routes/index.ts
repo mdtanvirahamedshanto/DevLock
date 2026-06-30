@@ -14,6 +14,16 @@ export function createRoutes(): Router {
 
   // ── Public routes ──────────────────────────────────────────────────
   router.use('/auth', authRoutes);
+  
+  router.get('/plans', async (req, res, next) => {
+    try {
+      const { PlanModel } = await import('@/database');
+      const plans = await PlanModel.find().sort({ maxProjects: 1 }).lean();
+      res.json({ success: true, data: plans });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   // ── SDK routes (API key auth, not JWT) ─────────────────────────────
   router.use('/sdk', sdkRoutes);
