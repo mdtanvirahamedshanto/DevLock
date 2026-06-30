@@ -1,5 +1,6 @@
-import { ManualPaymentModel, TenantModel, ProjectModel, UserModel } from '@/database';
+import { ManualPaymentModel, TenantModel, ProjectModel, UserModel, LicenseModel } from '@/database';
 import mongoose from 'mongoose';
+import os from 'os';
 
 export class AdminService {
   async getDashboardStats() {
@@ -7,8 +8,10 @@ export class AdminService {
     const totalProjects = await ProjectModel.countDocuments();
     const totalUsers = await UserModel.countDocuments();
     const pendingPayments = await ManualPaymentModel.countDocuments({ status: 'pending' });
+    const totalLicenses = await LicenseModel.countDocuments();
+    const activeLicenses = await LicenseModel.countDocuments({ status: 'active' });
 
-    return { totalTenants, totalProjects, totalUsers, pendingPayments };
+    return { totalTenants, totalProjects, totalUsers, pendingPayments, totalLicenses, activeLicenses };
   }
 
   async listManualPayments(status?: 'pending' | 'approved' | 'rejected') {
@@ -75,13 +78,41 @@ export class AdminService {
     else if (dbState === 2) dbStatus = 'connecting';
     else if (dbState === 3) dbStatus = 'disconnecting';
 
+    const totalRam = os.totalmem();
+    const freeRam = os.freemem();
+    const usedRam = totalRam - freeRam;
+    const ramPercentage = (usedRam / totalRam) * 100;
+    
+    // CPU usage based on 1 minute load average and number of logical CPUs
+    const cpus = os.cpus().length;
+    const loadAvg = os.loadavg()[0];
+    const cpuPercentage = Math.min((loadAvg / cpus) * 100, 100);
+
     return {
       database: dbStatus,
       apiGateway: 'online',
       version: '1.0.0',
       uptime: process.uptime(),
-      timestamp: new Date()
+      timestamp: new Date(),
+      ramUsage: {
+        total: totalRam,
+        used: usedRam,
+        percentage: ramPercentage
+      },
+      cpuUsage: cpuPercentage
     };
+  }
+
+  async backupDatabase() {
+    const backup: Record<string, any[]> = {};
+    const modelNames = mongoose.modelNames();
+    
+    for (const modelName of modelNames) {
+      const model = mongoose.model(modelName);
+      backup[modelName] = await model.find().lean();
+    }
+    
+    return backup;
   }
 
   async getPlans() {

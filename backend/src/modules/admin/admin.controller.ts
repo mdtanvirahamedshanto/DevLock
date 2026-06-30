@@ -40,6 +40,13 @@ export class AdminController {
     res.json({ success: true, data });
   }
 
+  async backupDatabase(req: Request, res: Response): Promise<void> {
+    const data = await adminService.backupDatabase();
+    res.setHeader('Content-disposition', `attachment; filename=devlock-backup-${Date.now()}.json`);
+    res.setHeader('Content-type', 'application/json');
+    res.send(JSON.stringify(data, null, 2));
+  }
+
   async getPlans(req: Request, res: Response): Promise<void> {
     const data = await adminService.getPlans();
     res.json({ success: true, data });

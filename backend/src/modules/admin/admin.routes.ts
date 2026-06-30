@@ -37,6 +37,10 @@ router.get('/status', (req, res, next) => {
   controller.getSystemStatus(req, res).catch(next);
 });
 
+router.get('/database/backup', (req, res, next) => {
+  controller.backupDatabase(req, res).catch(next);
+});
+
 router.get('/plans', (req, res, next) => {
   controller.getPlans(req, res).catch(next);
 });

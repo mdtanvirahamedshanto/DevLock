@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShieldCheck, XCircle, CheckCircle, Activity, Database, Server, Clock } from 'lucide-react';
+import { ShieldCheck, XCircle, CheckCircle, Activity, Database, Server, Clock, Cpu, MemoryStick, Users, Key, FolderKanban, Building2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 interface Payment {
@@ -23,23 +23,41 @@ interface SystemStatus {
   version: string;
   uptime: number;
   timestamp: string;
+  cpuUsage: number;
+  ramUsage: {
+    total: number;
+    used: number;
+    percentage: number;
+  };
+}
+
+interface DashboardStats {
+  totalTenants: number;
+  totalProjects: number;
+  totalUsers: number;
+  pendingPayments: number;
+  totalLicenses: number;
+  activeLicenses: number;
 }
 
 export default function SuperAdminPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [sysStatus, setSysStatus] = useState<SystemStatus | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [paymentsData, statusData] = await Promise.all([
+      const [paymentsData, statusData, statsData] = await Promise.all([
         apiClient.get<Payment[]>('/admin/payments?status=pending'),
-        apiClient.get<SystemStatus>('/admin/status')
+        apiClient.get<SystemStatus>('/admin/status'),
+        apiClient.get<DashboardStats>('/admin/stats')
       ]);
       setPayments(paymentsData || []);
       setSysStatus(statusData);
+      setStats(statsData);
     } catch (err: any) {
       setError(err.message || 'Failed to load data (Are you a superadmin?)');
     } finally {
@@ -51,6 +69,7 @@ export default function SuperAdminPage() {
     fetchData();
     const interval = setInterval(() => {
       apiClient.get<SystemStatus>('/admin/status').then(setSysStatus).catch(() => {});
+      apiClient.get<DashboardStats>('/admin/stats').then(setStats).catch(() => {});
     }, 30000); // refresh status every 30s
     return () => clearInterval(interval);
   }, []);
@@ -59,6 +78,7 @@ export default function SuperAdminPage() {
     try {
       await apiClient.post(`/admin/payments/${id}/${action}`, {});
       setPayments(prev => prev.filter(p => p._id !== id));
+      fetchData(); // refresh stats after approval/rejection
     } catch (err: any) {
       alert(err.message || `Failed to ${action} payment`);
     }
@@ -71,8 +91,30 @@ export default function SuperAdminPage() {
     return `${d}d ${h}h ${m}m`;
   };
 
+  const handleBackup = async () => {
+    try {
+      const data = await apiClient.get('/admin/database/backup');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devlock-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.message || 'Backup failed');
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    const gb = bytes / (1024 * 1024 * 1024);
+    return gb.toFixed(2) + ' GB';
+  };
+
   return (
-    <div className="space-y-8 bg-gray-50/50 min-h-full rounded-2xl p-2">
+    <div className="space-y-8 min-h-full rounded-2xl pb-8">
       {/* Header Section */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
         <div className="flex items-center gap-3">
@@ -88,56 +130,136 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
-      {/* System Status Grid */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-2 text-gray-500">
-            <Database className="w-5 h-5 text-indigo-600" />
-            <span className="font-medium text-sm">Database</span>
+      {/* Platform Overview */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Platform Overview</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full opacity-50" />
+            <div className="flex items-center gap-3 mb-2 text-gray-500">
+              <Users className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-sm">Total Users</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900">{stats?.totalUsers || 0}</div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${sysStatus?.database === 'connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-            <span className="text-xl font-semibold text-gray-900 capitalize">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-50 rounded-full opacity-50" />
+            <div className="flex items-center gap-3 mb-2 text-gray-500">
+              <Building2 className="w-5 h-5 text-purple-600" />
+              <span className="font-medium text-sm">Total Tenants</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900">{stats?.totalTenants || 0}</div>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-50 rounded-full opacity-50" />
+            <div className="flex items-center gap-3 mb-2 text-gray-500">
+              <FolderKanban className="w-5 h-5 text-orange-600" />
+              <span className="font-medium text-sm">Total Projects</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900">{stats?.totalProjects || 0}</div>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full opacity-50" />
+            <div className="flex items-center gap-3 mb-2 text-gray-500">
+              <Key className="w-5 h-5 text-emerald-600" />
+              <span className="font-medium text-sm">Total Licenses</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl font-bold text-gray-900">{stats?.totalLicenses || 0}</div>
+              <div className="text-sm font-medium text-emerald-600">({stats?.activeLicenses || 0} Active)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* System Health */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">System Health</h2>
+          <button
+            onClick={handleBackup}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
+          >
+            <Database className="w-4 h-4" />
+            Backup Database
+          </button>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-4 text-gray-500">
+              <Cpu className="w-5 h-5 text-indigo-600" />
+              <span className="font-medium text-sm">CPU Usage</span>
+            </div>
+            <div className="flex items-end justify-between mb-2">
+              <span className="text-2xl font-bold text-gray-900">
+                {sysStatus?.cpuUsage?.toFixed(1) || '0.0'}%
+              </span>
+            </div>
+            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${
+                  (sysStatus?.cpuUsage || 0) > 80 ? 'bg-red-500' : 'bg-indigo-500'
+                }`}
+                style={{ width: `${Math.min(sysStatus?.cpuUsage || 0, 100)}%` }}
+              />
+            </div>
+          </div>
+          
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-4 text-gray-500">
+              <MemoryStick className="w-5 h-5 text-teal-600" />
+              <span className="font-medium text-sm">RAM Usage</span>
+            </div>
+            <div className="flex items-end justify-between mb-2">
+              <span className="text-2xl font-bold text-gray-900">
+                {sysStatus?.ramUsage?.percentage?.toFixed(1) || '0.0'}%
+              </span>
+              <span className="text-xs font-medium text-gray-400 mb-1">
+                {sysStatus ? `${formatBytes(sysStatus.ramUsage.used)} / ${formatBytes(sysStatus.ramUsage.total)}` : ''}
+              </span>
+            </div>
+            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${
+                  (sysStatus?.ramUsage?.percentage || 0) > 85 ? 'bg-red-500' : 'bg-teal-500'
+                }`}
+                style={{ width: `${Math.min(sysStatus?.ramUsage?.percentage || 0, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-gray-500">
+                <Database className="w-5 h-5 text-sky-600" />
+                <span className="font-medium text-sm">Database</span>
+              </div>
+              <div className={`w-2.5 h-2.5 rounded-full ${sysStatus?.database === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`} />
+            </div>
+            <div className="text-2xl font-bold text-gray-900 capitalize mt-4">
               {sysStatus?.database || 'Checking...'}
-            </span>
+            </div>
           </div>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-2 text-gray-500">
-            <Server className="w-5 h-5 text-purple-600" />
-            <span className="font-medium text-sm">API Gateway</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${sysStatus?.apiGateway === 'online' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-            <span className="text-xl font-semibold text-gray-900 capitalize">
-              {sysStatus?.apiGateway || 'Checking...'}
-            </span>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-2 text-gray-500">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="font-medium text-sm">Uptime</span>
-          </div>
-          <div className="text-xl font-semibold text-gray-900">
-            {sysStatus ? formatUptime(sysStatus.uptime) : '0d 0h 0m'}
-          </div>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-2 text-gray-500">
-            <Activity className="w-5 h-5 text-emerald-600" />
-            <span className="font-medium text-sm">Platform Version</span>
-          </div>
-          <div className="text-xl font-semibold text-gray-900">
-            v{sysStatus?.version || '0.0.0'}
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-gray-500">
+                <Clock className="w-5 h-5 text-rose-600" />
+                <span className="font-medium text-sm">Uptime</span>
+              </div>
+              <Activity className="w-4 h-4 text-emerald-500" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mt-4">
+              {sysStatus ? formatUptime(sysStatus.uptime) : '0d 0h 0m'}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Payments Table */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-xl font-semibold text-gray-900">Pending Manual Payments</h2>
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900">Pending Manual Payments</h2>
           <p className="text-sm text-gray-500 mt-1">Review and approve bank transfers or crypto payments.</p>
         </div>
         
@@ -149,7 +271,7 @@ export default function SuperAdminPage() {
           </div>
         ) : payments.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
-            <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500/50" />
+            <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-500/50" />
             <p className="text-lg font-medium text-gray-900">All caught up!</p>
             <p className="text-sm mt-1">No pending payments require your attention.</p>
           </div>
